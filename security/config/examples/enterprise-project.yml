@@ -1,0 +1,174 @@
+# Security Module Configuration for Enterprise Projects
+# Example: Large corporate applications, compliance-heavy environments
+
+scanners:
+  pip-audit:
+    enabled: true
+    output_file: "security/reports/latest/pip-audit.json"
+    format: "json"
+    include_dev: true
+    # Enterprise-specific options
+    vulnerability_database: "enterprise"  # Use internal vuln DB if available
+    
+  bandit:
+    enabled: true
+    output_file: "security/reports/latest/bandit.json"
+    format: "json"
+    exclude_paths: 
+      - "tests/"
+      - "docs/"
+      - "vendor/"
+      - "third_party/"
+    # Strict settings for enterprise
+    confidence_level: "low"  # Catch more potential issues
+    severity_level: "low"
+    
+  secrets:
+    enabled: true
+    output_file: "security/reports/latest/secrets-scan.json"
+    format: "json"
+    # Enterprise secret patterns
+    patterns:
+      - "enterprise_api_key"
+      - "ldap_password"
+      - "database_connection"
+      - "service_account_key"
+      - "encryption_key"
+    
+  safety:
+    enabled: true
+    output_file: "security/reports/latest/safety.json"
+    format: "json"
+    
+  # Enterprise custom scanners
+  sonarqube:
+    enabled: true
+    output_file: "security/reports/latest/sonarqube.json"
+    format: "json"
+    server_url: "${SONARQUBE_URL}"
+    
+  checkmarx:
+    enabled: true
+    output_file: "security/reports/latest/checkmarx.json"
+    format: "json"
+    server_url: "${CHECKMARX_URL}"
+
+# Enterprise archival requirements
+archival:
+  enabled: true
+  retention_days: 2555  # 7 years for compliance
+  archive_path: "security/reports/archived"
+  archive_frequency: "daily"
+  # Compliance-specific archival
+  compliance_retention: true
+  audit_trail: true
+  encryption: true
+
+# Enterprise document generation
+document:
+  template: "security/config/findings-template.md"
+  output: "security/findings/SECURITY_FINDINGS.md"
+  include_resolved: true
+  max_age_days: 365  # Full year for compliance
+  # Enterprise-specific sections
+  sections:
+    - "executive_summary"
+    - "compliance_status"
+    - "dependency_vulnerabilities"
+    - "code_security_issues"
+    - "secret_exposures"
+    - "infrastructure_security"
+    - "remediation_timeline"
+    - "risk_assessment"
+
+# Enterprise remediation defaults
+remediation_defaults:
+  new_finding:
+    status: "new"
+    planned_action: "Enterprise security review required"
+    target_date: null
+    assigned_to: "security-team"
+    notes: "Enterprise security finding - compliance assessment required"
+    workaround: "None identified"
+    priority: "medium"
+    business_impact: "Under assessment"
+    # Enterprise-specific fields
+    compliance_impact: "To be determined"
+    risk_score: null
+    business_owner: "TBD"
+    technical_owner: "TBD"
+
+# Strict enterprise SLAs
+priority_escalation:
+  critical: 
+    sla_hours: 1  # Very strict for enterprise
+    escalation_team: "security-incident-response"
+    notification_channels: ["email", "slack", "pagerduty"]
+    executive_notification: true
+  high:
+    sla_hours: 8
+    escalation_team: "security-team"
+    notification_channels: ["email", "slack"]
+    manager_notification: true
+  medium:
+    sla_days: 5
+    escalation_team: "security-team"
+    notification_channels: ["email"]
+  low:
+    sla_days: 30
+    escalation_team: "dev-team"
+
+# Enterprise assignment rules with approval workflows
+assignment_rules:
+  critical_vulnerability: 
+    primary: "security-incident-response"
+    approver: "ciso"
+    escalation_path: ["security-team", "security-manager", "ciso"]
+  high_vulnerability:
+    primary: "security-team"
+    approver: "security-manager"
+    escalation_path: ["security-team", "security-manager"]
+  dependency_vulnerability: 
+    primary: "dev-team"
+    approver: "tech-lead"
+    security_review: true
+  code_security_issue: 
+    primary: "security-team"
+    approver: "security-manager"
+  secret_exposure: 
+    primary: "security-incident-response"
+    approver: "ciso"
+    immediate_action: true
+
+# Compliance and governance
+compliance:
+  frameworks: ["SOX", "PCI-DSS", "ISO27001", "NIST"]
+  reporting_frequency: "monthly"
+  audit_requirements: true
+  risk_assessment_required: true
+  
+governance:
+  security_committee_review: true
+  quarterly_security_review: true
+  annual_security_assessment: true
+  
+# Integration with enterprise tools
+integrations:
+  jira:
+    enabled: true
+    project_key: "SEC"
+    issue_type: "Security Finding"
+    
+  servicenow:
+    enabled: true
+    table: "security_incidents"
+    
+  splunk:
+    enabled: true
+    index: "security_findings"
+    
+  email_notifications:
+    enabled: true
+    smtp_server: "${ENTERPRISE_SMTP}"
+    security_team: "security@company.com"
+    management: "security-management@company.com"

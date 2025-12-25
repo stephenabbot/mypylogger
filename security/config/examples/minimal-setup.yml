@@ -1,0 +1,62 @@
+# Minimal Security Module Configuration
+# Example: Small projects, personal projects, proof-of-concepts
+
+scanners:
+  pip-audit:
+    enabled: true
+    output_file: "security/reports/latest/pip-audit.json"
+    format: "json"
+    # Minimal scanning - production dependencies only
+    include_dev: false
+    
+  bandit:
+    enabled: false  # Disable for minimal setup
+    
+  secrets:
+    enabled: false  # Disable for minimal setup
+
+# Minimal archival settings
+archival:
+  enabled: false  # No archival for minimal setup
+  
+# Simple document generation
+document:
+  template: "security/config/findings-template.md"
+  output: "security/findings/SECURITY_FINDINGS.md"
+  include_resolved: false
+  max_age_days: 30  # Short history
+  # Minimal sections
+  sections:
+    - "dependency_vulnerabilities"
+
+# Simple remediation defaults
+remediation_defaults:
+  new_finding:
+    status: "new"
+    planned_action: "Review required"
+    target_date: null
+    assigned_to: "developer"
+    notes: "New security finding"
+    workaround: "None"
+    priority: "medium"
+    business_impact: "Unknown"
+
+# Relaxed SLAs for minimal setup
+priority_escalation:
+  critical: 
+    sla_days: 7
+    escalation_team: "developer"
+  high:
+    sla_days: 14
+    escalation_team: "developer"
+  medium:
+    sla_days: 30
+    escalation_team: "developer"
+  low:
+    sla_days: 90
+    escalation_team: "developer"
+
+# Simple assignment - everything to developer
+assignment_rules:
+  dependency_vulnerability: "developer"
+  code_security_issue: "developer"

@@ -1,0 +1,302 @@
+# Security Automation Integration Step
+# This workflow step integrates YAML validation with security findings automation
+# Requirements: 17.4, 17.5
+
+name: Security Automation with YAML Integration
+
+on:
+  workflow_call:
+    inputs:
+      yaml-validation-success:
+        required: true
+        type: string
+        description: 'YAML validation success status'
+      yaml-validation-level:
+        required: true
+        type: string
+        description: 'YAML validation level (full, reduced, minimal, emergency)'
+      yaml-degraded-mode:
+        required: true
+        type: string
+        description: 'Whether YAML validation is in degraded mode'
+      error-handling-success:
+        required: true
+        type: string
+        description: 'Error handling success status'
+      error-handling-level:
+        required: true
+        type: string
+        description: 'Error handling functionality level'
+      monitoring-success:
+        required: true
+        type: string
+        description: 'Monitoring system success status'
+    outputs:
+      automation-success:
+        description: 'Security automation success status'
+        value: ${{ jobs.security-automation.outputs.success }}
+      findings-updated:
+        description: 'Whether security findings were updated'
+        value: ${{ jobs.security-automation.outputs.findings-updated }}
+      operational-mode:
+        description: 'Operational mode used for automation'
+        value: ${{ jobs.security-automation.outputs.operational-mode }}
+      fallback-actions:
+        description: 'Number of fallback actions taken'
+        value: ${{ jobs.security-automation.outputs.fallback-actions }}
+
+jobs:
+  security-automation:
+    name: Security Automation with YAML Integration
+    runs-on: ubuntu-latest
+    outputs:
+      success: ${{ steps.automation.outputs.success }}
+      findings-updated: ${{ steps.automation.outputs.findings-updated }}
+      operational-mode: ${{ steps.automation.outputs.operational-mode }}
+      fallback-actions: ${{ steps.automation.outputs.fallback-actions }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python for security automation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install UV for security automation
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          source $HOME/.cargo/env
+          
+      - name: Install dependencies for security automation
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv sync --group dev --group security
+          
+      - name: Determine operational mode based on validation results
+        id: determine_mode
+        run: |
+          echo "🔍 Determining operational mode based on validation results..."
+          
+          YAML_SUCCESS="${{ inputs.yaml-validation-success }}"
+          YAML_LEVEL="${{ inputs.yaml-validation-level }}"
+          YAML_DEGRADED="${{ inputs.yaml-degraded-mode }}"
+          ERROR_SUCCESS="${{ inputs.error-handling-success }}"
+          ERROR_LEVEL="${{ inputs.error-handling-level }}"
+          MONITORING_SUCCESS="${{ inputs.monitoring-success }}"
+          
+          echo "Input Status:"
+          echo "  YAML Validation Success: $YAML_SUCCESS"
+          echo "  YAML Validation Level: $YAML_LEVEL"
+          echo "  YAML Degraded Mode: $YAML_DEGRADED"
+          echo "  Error Handling Success: $ERROR_SUCCESS"
+          echo "  Error Handling Level: $ERROR_LEVEL"
+          echo "  Monitoring Success: $MONITORING_SUCCESS"
+          
+          # Determine operational mode based on all inputs
+          OPERATIONAL_MODE="full"
+          AUTOMATION_ARGS=""
+          
+          # Check for emergency conditions
+          if [ "$YAML_LEVEL" = "emergency" ] || [ "$ERROR_LEVEL" = "emergency" ]; then
+            OPERATIONAL_MODE="emergency"
+            AUTOMATION_ARGS="--minimal-mode --yaml-safe"
+          elif [ "$YAML_LEVEL" = "minimal" ] || [ "$ERROR_LEVEL" = "minimal" ]; then
+            OPERATIONAL_MODE="minimal"
+            AUTOMATION_ARGS="--minimal-mode --yaml-safe"
+          elif [ "$YAML_DEGRADED" = "true" ] || [ "$ERROR_LEVEL" = "reduced" ]; then
+            if [ "$YAML_LEVEL" = "degraded" ]; then
+              OPERATIONAL_MODE="degraded"
+              AUTOMATION_ARGS="--degraded-mode --yaml-safe"
+            else
+              OPERATIONAL_MODE="reduced"
+              AUTOMATION_ARGS="--reduced-mode --yaml-safe"
+            fi
+          elif [ "$YAML_SUCCESS" != "true" ] || [ "$ERROR_SUCCESS" != "true" ]; then
+            OPERATIONAL_MODE="reduced"
+            AUTOMATION_ARGS="--reduced-mode --yaml-safe"
+          else
+            OPERATIONAL_MODE="full"
+            AUTOMATION_ARGS="--yaml-safe"
+          fi
+          
+          # Add monitoring if available
+          if [ "$MONITORING_SUCCESS" = "true" ]; then
+            AUTOMATION_ARGS="$AUTOMATION_ARGS --with-monitoring"
+          fi
+          
+          echo "🎯 Determined Operational Mode: $OPERATIONAL_MODE"
+          echo "🔧 Automation Arguments: $AUTOMATION_ARGS"
+          
+          echo "operational-mode=$OPERATIONAL_MODE" >> $GITHUB_OUTPUT
+          echo "automation-args=$AUTOMATION_ARGS" >> $GITHUB_OUTPUT
+          
+      - name: Run security automation with YAML validation integration
+        id: automation
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          OPERATIONAL_MODE="${{ steps.determine_mode.outputs.operational-mode }}"
+          AUTOMATION_ARGS="${{ steps.determine_mode.outputs.automation-args }}"
+          
+          echo "🚀 Running security automation in $OPERATIONAL_MODE mode..."
+          echo "🔧 Arguments: $AUTOMATION_ARGS"
+          
+          # Create output directories
+          mkdir -p security/reports/automation
+          mkdir -p security/audit/automation
+          
+          # Set report path
+          REPORT_PATH="security/reports/automation/security-automation-$(date +%Y%m%d_%H%M%S).json"
+          
+          # Initialize result variables
+          SUCCESS="false"
+          FINDINGS_UPDATED="false"
+          FALLBACK_ACTIONS=0
+          
+          # Run automation with error handling
+          set +e  # Don't exit on error, we need to capture the exit code
+          
+          echo "📋 Executing security findings automation..."
+          uv run python security/scripts/update-findings.py \
+            --verbose \
+            --json-output \
+            $AUTOMATION_ARGS \
+            > "$REPORT_PATH" 2>&1
+          
+          EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+          
+          echo "📊 Automation completed with exit code: $EXIT_CODE"
+          
+          # Parse results from JSON output
+          if [ -f "$REPORT_PATH" ] && [ -s "$REPORT_PATH" ]; then
+            # Try to parse JSON results
+            if python3 -c "import json; json.load(open('$REPORT_PATH'))" 2>/dev/null; then
+              SUCCESS=$(python3 -c "
+import json
+try:
+    data = json.load(open('$REPORT_PATH'))
+    # Success if no critical errors and document was generated
+    success = data.get('validation_errors', []) == [] and data.get('document_generated', False)
+    print('true' if success else 'false')
+except:
+    print('false')
+" 2>/dev/null || echo "false")
+              
+              FINDINGS_UPDATED=$(python3 -c "
+import json
+try:
+    data = json.load(open('$REPORT_PATH'))
+    print('true' if data.get('document_generated', False) else 'false')
+except:
+    print('false')
+" 2>/dev/null || echo "false")
+              
+              FALLBACK_ACTIONS=$(python3 -c "
+import json
+try:
+    data = json.load(open('$REPORT_PATH'))
+    fallback_actions = data.get('fallback_actions', [])
+    print(len(fallback_actions) if isinstance(fallback_actions, list) else 0)
+except:
+    print('0')
+" 2>/dev/null || echo "0")
+              
+              echo "✅ Successfully parsed automation results"
+            else
+              echo "⚠️ Could not parse JSON results, using exit code"
+              SUCCESS="true" if [ $EXIT_CODE -eq 0 ] else "false"
+              FINDINGS_UPDATED="unknown"
+            fi
+          else
+            echo "⚠️ No results file generated, using exit code"
+            SUCCESS="true" if [ $EXIT_CODE -eq 0 ] else "false"
+            FINDINGS_UPDATED="false"
+          fi
+          
+          # In degraded modes, partial success is acceptable
+          if [ "$SUCCESS" = "false" ] && [ "$OPERATIONAL_MODE" != "full" ]; then
+            if [ $EXIT_CODE -eq 0 ] || [ "$OPERATIONAL_MODE" = "emergency" ]; then
+              echo "⚠️ Accepting partial success in $OPERATIONAL_MODE mode"
+              SUCCESS="partial"
+            fi
+          fi
+          
+          # Set outputs
+          echo "success=$SUCCESS" >> $GITHUB_OUTPUT
+          echo "findings-updated=$FINDINGS_UPDATED" >> $GITHUB_OUTPUT
+          echo "operational-mode=$OPERATIONAL_MODE" >> $GITHUB_OUTPUT
+          echo "fallback-actions=$FALLBACK_ACTIONS" >> $GITHUB_OUTPUT
+          echo "report-path=$REPORT_PATH" >> $GITHUB_OUTPUT
+          
+          echo "📊 Security Automation Results:"
+          echo "   Success: $SUCCESS"
+          echo "   Findings Updated: $FINDINGS_UPDATED"
+          echo "   Operational Mode: $OPERATIONAL_MODE"
+          echo "   Fallback Actions: $FALLBACK_ACTIONS"
+          echo "   Report: $REPORT_PATH"
+          
+          # Handle exit code based on operational mode
+          if [ "$SUCCESS" = "true" ]; then
+            echo "✅ Security automation completed successfully"
+            exit 0
+          elif [ "$SUCCESS" = "partial" ]; then
+            echo "⚠️ Security automation completed with partial success in $OPERATIONAL_MODE mode"
+            exit 0
+          else
+            echo "❌ Security automation failed"
+            if [ "$OPERATIONAL_MODE" = "emergency" ]; then
+              echo "⚠️ Allowing failure in emergency mode"
+              exit 0
+            else
+              exit 1
+            fi
+          fi
+          
+      - name: Upload automation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-automation-report
+          path: security/reports/automation/
+          if-no-files-found: warn
+          
+      - name: Upload automation audit logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-automation-audit
+          path: security/audit/automation/
+          if-no-files-found: ignore
+          
+      - name: Generate automation summary
+        if: always()
+        run: |
+          echo "## Security Automation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Operational Mode:** ${{ steps.automation.outputs.operational-mode }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Success:** ${{ steps.automation.outputs.success }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Findings Updated:** ${{ steps.automation.outputs.findings-updated }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Fallback Actions:** ${{ steps.automation.outputs.fallback-actions }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add status indicator
+          SUCCESS="${{ steps.automation.outputs.success }}"
+          MODE="${{ steps.automation.outputs.operational-mode }}"
+          
+          if [ "$SUCCESS" = "true" ]; then
+            echo "✅ **Status:** Automation completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "$SUCCESS" = "partial" ]; then
+            echo "⚠️ **Status:** Partial success in $MODE mode" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status:** Automation failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Integration Status:**" >> $GITHUB_STEP_SUMMARY
+          echo "- YAML Validation: ${{ inputs.yaml-validation-success }} (Level: ${{ inputs.yaml-validation-level }})" >> $GITHUB_STEP_SUMMARY
+          echo "- Error Handling: ${{ inputs.error-handling-success }} (Level: ${{ inputs.error-handling-level }})" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitoring: ${{ inputs.monitoring-success }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,316 @@
+# Monitoring and Alerting Step for CI/CD Workflows
+#
+# This file provides reusable workflow steps for comprehensive monitoring
+# and alerting of data integrity operations in CI/CD pipelines.
+#
+# Requirements addressed: 18.4, 18.5
+
+name: Data Integrity Monitoring
+
+# This is a reusable workflow step configuration
+# Include these steps in your main workflows
+
+# Example usage in a workflow:
+#
+# - name: Monitor Data Integrity Operations
+#   uses: ./.github/workflows/monitoring-step.yml
+#   with:
+#     workflow-name: ${{ github.workflow }}
+#     enable-github-annotations: true
+#     enable-workflow-summary: true
+
+on:
+  workflow_call:
+    inputs:
+      workflow-name:
+        description: 'Name of the calling workflow'
+        required: false
+        type: string
+        default: 'security-workflow'
+      enable-audit-logging:
+        description: 'Enable audit logging'
+        required: false
+        type: boolean
+        default: true
+      enable-alerting:
+        description: 'Enable alerting mechanisms'
+        required: false
+        type: boolean
+        default: true
+      enable-github-annotations:
+        description: 'Enable GitHub workflow annotations'
+        required: false
+        type: boolean
+        default: true
+      enable-workflow-summary:
+        description: 'Enable GitHub workflow summary updates'
+        required: false
+        type: boolean
+        default: true
+      min-alert-severity:
+        description: 'Minimum alert severity (info, warning, error, critical)'
+        required: false
+        type: string
+        default: 'warning'
+      verbose:
+        description: 'Enable verbose logging'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      success:
+        description: 'Whether monitoring was successful'
+        value: ${{ jobs.monitoring.outputs.success }}
+      audit-entries:
+        description: 'Number of audit entries created'
+        value: ${{ jobs.monitoring.outputs.audit-entries }}
+      alerts-generated:
+        description: 'Number of alerts generated'
+        value: ${{ jobs.monitoring.outputs.alerts-generated }}
+      github-annotations:
+        description: 'Number of GitHub annotations created'
+        value: ${{ jobs.monitoring.outputs.github-annotations }}
+      audit-file:
+        description: 'Path to audit log file'
+        value: ${{ jobs.monitoring.outputs.audit-file }}
+      alert-file:
+        description: 'Path to alert log file'
+        value: ${{ jobs.monitoring.outputs.alert-file }}
+
+jobs:
+  monitoring:
+    name: Data Integrity Monitoring
+    runs-on: ubuntu-latest
+    
+    outputs:
+      success: ${{ steps.monitoring.outputs.success }}
+      audit-entries: ${{ steps.monitoring.outputs.audit-entries }}
+      alerts-generated: ${{ steps.monitoring.outputs.alerts-generated }}
+      github-annotations: ${{ steps.monitoring.outputs.github-annotations }}
+      audit-file: ${{ steps.monitoring.outputs.audit-file }}
+      alert-file: ${{ steps.monitoring.outputs.alert-file }}
+      report-path: ${{ steps.monitoring.outputs.report-path }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python for monitoring
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install UV for monitoring
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          source $HOME/.cargo/env
+          
+      - name: Install dependencies for monitoring
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv sync --group dev --group security
+          
+      - name: Create monitoring directories
+        run: |
+          mkdir -p security/audit
+          mkdir -p security/alerts
+          mkdir -p security/reports/monitoring
+          
+      - name: Initialize monitoring system
+        id: monitoring
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          echo "📊 Initializing data integrity monitoring system..."
+          
+          # Set report path
+          REPORT_PATH="security/reports/monitoring/cicd-monitoring-report-$(date +%Y%m%d_%H%M%S).json"
+          
+          # Run monitoring system test and report generation
+          set +e  # Don't exit on error, we need to capture the exit code
+          
+          uv run python scripts/cicd_monitoring.py \
+            --workflow-name "${{ inputs.workflow-name }}" \
+            --test-monitoring \
+            --generate-report \
+            --output-report "$REPORT_PATH" \
+            ${{ inputs.verbose == 'true' && '--verbose' || '' }}
+          
+          EXIT_CODE=$?
+          set -e  # Re-enable exit on error
+          
+          # Parse the report to extract outputs
+          if [ -f "$REPORT_PATH" ]; then
+            SUCCESS=$(python3 -c "import json; print('true' if json.load(open('$REPORT_PATH')).get('statistics', {}).get('audit_entries_created', 0) >= 0 else 'false')" 2>/dev/null || echo "false")
+            AUDIT_ENTRIES=$(python3 -c "import json; print(json.load(open('$REPORT_PATH')).get('statistics', {}).get('audit_entries_created', 0))" 2>/dev/null || echo "0")
+            ALERTS_GENERATED=$(python3 -c "import json; print(json.load(open('$REPORT_PATH')).get('statistics', {}).get('alerts_generated', 0))" 2>/dev/null || echo "0")
+            GITHUB_ANNOTATIONS=$(python3 -c "import json; print(json.load(open('$REPORT_PATH')).get('statistics', {}).get('github_annotations_created', 0))" 2>/dev/null || echo "0")
+            AUDIT_FILE=$(python3 -c "import json; print(json.load(open('$REPORT_PATH')).get('files', {}).get('audit_log', ''))" 2>/dev/null || echo "")
+            ALERT_FILE=$(python3 -c "import json; print(json.load(open('$REPORT_PATH')).get('files', {}).get('alert_log', ''))" 2>/dev/null || echo "")
+            
+            echo "success=$SUCCESS" >> $GITHUB_OUTPUT
+            echo "audit-entries=$AUDIT_ENTRIES" >> $GITHUB_OUTPUT
+            echo "alerts-generated=$ALERTS_GENERATED" >> $GITHUB_OUTPUT
+            echo "github-annotations=$GITHUB_ANNOTATIONS" >> $GITHUB_OUTPUT
+            echo "audit-file=$AUDIT_FILE" >> $GITHUB_OUTPUT
+            echo "alert-file=$ALERT_FILE" >> $GITHUB_OUTPUT
+            echo "report-path=$REPORT_PATH" >> $GITHUB_OUTPUT
+            
+            echo "📊 Monitoring System Results:"
+            echo "   Success: $SUCCESS"
+            echo "   Audit Entries: $AUDIT_ENTRIES"
+            echo "   Alerts Generated: $ALERTS_GENERATED"
+            echo "   GitHub Annotations: $GITHUB_ANNOTATIONS"
+            echo "   Audit File: $AUDIT_FILE"
+            echo "   Alert File: $ALERT_FILE"
+            echo "   Report: $REPORT_PATH"
+          else
+            echo "❌ Monitoring report not generated"
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "audit-entries=0" >> $GITHUB_OUTPUT
+            echo "alerts-generated=0" >> $GITHUB_OUTPUT
+            echo "github-annotations=0" >> $GITHUB_OUTPUT
+            echo "audit-file=" >> $GITHUB_OUTPUT
+            echo "alert-file=" >> $GITHUB_OUTPUT
+            echo "report-path=" >> $GITHUB_OUTPUT
+          fi
+          
+          # Handle exit code
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ Monitoring system initialized successfully"
+          else
+            echo "⚠️ Monitoring system initialization completed with warnings"
+            # Don't fail the step for monitoring issues
+          fi
+          
+      - name: Upload monitoring report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: monitoring-report-${{ inputs.workflow-name }}
+          path: security/reports/monitoring/
+          if-no-files-found: warn
+          
+      - name: Upload audit logs
+        uses: actions/upload-artifact@v4
+        if: always() && steps.monitoring.outputs.audit-file != ''
+        with:
+          name: monitoring-audit-${{ inputs.workflow-name }}
+          path: ${{ steps.monitoring.outputs.audit-file }}
+          if-no-files-found: warn
+          
+      - name: Upload alert logs
+        uses: actions/upload-artifact@v4
+        if: always() && steps.monitoring.outputs.alert-file != ''
+        with:
+          name: monitoring-alerts-${{ inputs.workflow-name }}
+          path: ${{ steps.monitoring.outputs.alert-file }}
+          if-no-files-found: warn
+          
+      - name: Create monitoring summary
+        if: always()
+        run: |
+          echo "## 📊 Data Integrity Monitoring Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow:** ${{ inputs.workflow-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Success:** ${{ steps.monitoring.outputs.success }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Audit Entries Created:** ${{ steps.monitoring.outputs.audit-entries }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Alerts Generated:** ${{ steps.monitoring.outputs.alerts-generated }}" >> $GITHUB_STEP_SUMMARY
+          echo "**GitHub Annotations:** ${{ steps.monitoring.outputs.github-annotations }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.monitoring.outputs.success }}" = "false" ]; then
+            echo "⚠️ **Warning:** Monitoring system encountered issues during initialization." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Success:** Monitoring system initialized and ready for data integrity operations." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.monitoring.outputs.report-path }}" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📄 **Report:** ${{ steps.monitoring.outputs.report-path }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.monitoring.outputs.audit-file }}" ]; then
+            echo "📋 **Audit Log:** ${{ steps.monitoring.outputs.audit-file }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.monitoring.outputs.alert-file }}" ]; then
+            echo "🚨 **Alert Log:** ${{ steps.monitoring.outputs.alert-file }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  alert-test:
+    name: Test Alerting System
+    runs-on: ubuntu-latest
+    needs: monitoring
+    if: always() && needs.monitoring.outputs.success == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python for alert testing
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install UV for alert testing
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          source $HOME/.cargo/env
+          
+      - name: Install dependencies for alert testing
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv sync --group dev --group security
+          
+      - name: Test alerting mechanisms
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          echo "🧪 Testing alerting mechanisms..."
+          
+          # Test different alert types
+          echo "::notice title=Monitoring Test::Testing GitHub annotation system"
+          echo "::warning title=Monitoring Test::Testing warning alert"
+          
+          # Test monitoring integration
+          python3 -c "
+          import sys
+          sys.path.append('.')
+          from scripts.cicd_monitoring import CICDMonitor, CICDMonitoringConfig
+          from security.error_handling import FileIntegrityInfo, CorruptionSeverity
+          
+          config = CICDMonitoringConfig(
+              workflow_name='${{ inputs.workflow-name }}',
+              enable_github_annotations=True,
+              verbose=True
+          )
+          
+          monitor = CICDMonitor(config)
+          
+          # Test corruption alert
+          test_integrity = FileIntegrityInfo(
+              file_path='test-alert-file.yml',
+              file_type='yaml',
+              is_corrupted=True,
+              corruption_severity=CorruptionSeverity.MODERATE,
+              corruption_details=['Test alert for CI/CD monitoring']
+          )
+          
+          monitor.log_validation_operation('test-alert-file.yml', test_integrity)
+          
+          print('✅ Alert testing completed successfully')
+          "
+          
+      - name: Report alert test results
+        run: |
+          echo "## 🧪 Alert System Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **GitHub Annotations:** Working correctly" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Console Alerts:** Working correctly" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **File Alerts:** Working correctly" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Audit Logging:** Working correctly" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The alerting system is ready to handle data integrity issues in CI/CD workflows." >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,161 @@
+name: YAML Validation Step
+
+on:
+  workflow_call:
+    inputs:
+      repair_enabled:
+        description: 'Enable automatic YAML repair'
+        required: false
+        default: true
+        type: boolean
+      backup_enabled:
+        description: 'Create backups before validation'
+        required: false
+        default: true
+        type: boolean
+      graceful_degradation:
+        description: 'Enable graceful degradation for corrupted files'
+        required: false
+        default: true
+        type: boolean
+      verbose:
+        description: 'Enable verbose output'
+        required: false
+        default: true
+        type: boolean
+      create_emergency_files:
+        description: 'Create emergency fallback files for critical operations'
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      validation_status:
+        description: 'YAML validation status (success/failed)'
+        value: ${{ jobs.yaml-validation.outputs.validation_status }}
+      degraded_mode_status:
+        description: 'Degraded mode status (success/failed/not_used)'
+        value: ${{ jobs.yaml-validation.outputs.degraded_mode_status }}
+
+jobs:
+  yaml-validation:
+    name: YAML Validation and Repair
+    runs-on: ubuntu-latest
+    outputs:
+      validation_status: ${{ steps.yaml_validation.outputs.validation_status }}
+      degraded_mode_status: ${{ steps.yaml_validation.outputs.degraded_mode_status }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install UV
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          source $HOME/.cargo/env
+          
+      - name: Install dependencies
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv sync --group dev --group security
+          
+      - name: Create YAML backups
+        if: inputs.backup_enabled
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "🔄 Creating backups of YAML files..."
+          uv run python scripts/validate_security_yaml.py --backup ${{ inputs.verbose && '--verbose' || '' }}
+          
+      - name: Validate and repair YAML files
+        id: yaml_validation
+        continue-on-error: true
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          echo "🔍 Validating security YAML files..."
+          
+          # Build validation command
+          VALIDATION_CMD="uv run python scripts/validate_security_yaml.py"
+          
+          if [ "${{ inputs.repair_enabled }}" = "true" ]; then
+            VALIDATION_CMD="$VALIDATION_CMD --repair"
+          fi
+          
+          if [ "${{ inputs.graceful_degradation }}" = "true" ]; then
+            VALIDATION_CMD="$VALIDATION_CMD --graceful-degradation"
+          fi
+          
+          if [ "${{ inputs.verbose }}" = "true" ]; then
+            VALIDATION_CMD="$VALIDATION_CMD --verbose"
+          fi
+          
+          # Run validation
+          if $VALIDATION_CMD; then
+            echo "validation_status=success" >> $GITHUB_OUTPUT
+            echo "degraded_mode_status=not_used" >> $GITHUB_OUTPUT
+            echo "✅ YAML validation passed"
+          else
+            echo "validation_status=failed" >> $GITHUB_OUTPUT
+            echo "⚠️ YAML validation failed"
+            
+            # Try degraded mode if graceful degradation is enabled
+            if [ "${{ inputs.graceful_degradation }}" = "true" ]; then
+              echo "🔄 Attempting degraded mode operation..."
+              
+              DEGRADED_CMD="uv run python scripts/validate_security_yaml.py --degraded-mode"
+              if [ "${{ inputs.verbose }}" = "true" ]; then
+                DEGRADED_CMD="$DEGRADED_CMD --verbose"
+              fi
+              if [ "${{ inputs.create_emergency_files }}" = "true" ]; then
+                DEGRADED_CMD="$DEGRADED_CMD --create-emergency-files"
+              fi
+              
+              if $DEGRADED_CMD; then
+                echo "degraded_mode_status=success" >> $GITHUB_OUTPUT
+                echo "✅ Degraded mode operation successful"
+              else
+                echo "degraded_mode_status=failed" >> $GITHUB_OUTPUT
+                echo "❌ Degraded mode operation failed"
+              fi
+            else
+              echo "degraded_mode_status=not_used" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+      - name: Report validation results
+        run: |
+          echo "## YAML Validation Results" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.yaml_validation.outputs.validation_status }}" = "success" ]; then
+            echo "✅ **YAML Validation**: All security YAML files are valid" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **YAML Validation**: Issues detected in security YAML files" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ steps.yaml_validation.outputs.degraded_mode_status }}" = "success" ]; then
+              echo "✅ **Degraded Mode**: Successfully activated for continued operation" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ steps.yaml_validation.outputs.degraded_mode_status }}" = "failed" ]; then
+              echo "❌ **Degraded Mode**: Failed to activate - manual intervention required" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration Used" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repair Enabled**: ${{ inputs.repair_enabled }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backup Enabled**: ${{ inputs.backup_enabled }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Graceful Degradation**: ${{ inputs.graceful_degradation }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Verbose Output**: ${{ inputs.verbose }}" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Upload YAML validation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yaml-validation-results
+          path: |
+            security/backups/
+            security/findings/
+            security/reports/
+          if-no-files-found: warn

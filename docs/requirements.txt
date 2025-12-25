@@ -1,0 +1,8 @@
+# Documentation dependencies for Sphinx
+sphinx>=7.1.0
+sphinx-rtd-theme>=2.0.0
+sphinx-autodoc-typehints>=1.25.0
+
+# Required for autodoc to work with the project
+python-json-logger>=4.0.0
+jinja2>=3.1.6

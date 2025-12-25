@@ -1,0 +1,316 @@
+# Error Handling Step for CI/CD Workflows
+# 
+# This file provides reusable workflow steps for comprehensive error handling
+# of security data files in CI/CD pipelines. It integrates corruption detection,
+# recovery mechanisms, and graceful degradation.
+#
+# Requirements addressed: 18.1, 18.2
+
+name: Security Data Error Handling
+
+# This is a reusable workflow step configuration
+# Include these steps in your main workflows
+
+# Example usage in a workflow:
+# 
+# - name: Handle Security Data File Errors
+#   uses: ./.github/workflows/error-handling-step.yml
+#   with:
+#     workflow-name: ${{ github.workflow }}
+#     enable-recovery: true
+#     enable-degradation: true
+#     fail-on-critical: true
+
+on:
+  workflow_call:
+    inputs:
+      workflow-name:
+        description: 'Name of the calling workflow'
+        required: false
+        type: string
+        default: 'security-workflow'
+      enable-recovery:
+        description: 'Enable automatic file recovery'
+        required: false
+        type: boolean
+        default: true
+      enable-degradation:
+        description: 'Enable graceful degradation'
+        required: false
+        type: boolean
+        default: true
+      fail-on-critical:
+        description: 'Fail workflow on critical file corruption'
+        required: false
+        type: boolean
+        default: true
+      specific-files:
+        description: 'Specific files to process (space-separated)'
+        required: false
+        type: string
+        default: ''
+      verbose:
+        description: 'Enable verbose logging'
+        required: false
+        type: boolean
+        default: false
+    outputs:
+      success:
+        description: 'Whether error handling was successful'
+        value: ${{ jobs.error-handling.outputs.success }}
+      can-continue:
+        description: 'Whether workflow can continue'
+        value: ${{ jobs.error-handling.outputs.can-continue }}
+      functionality-level:
+        description: 'Determined functionality level'
+        value: ${{ jobs.error-handling.outputs.functionality-level }}
+      files-corrupted:
+        description: 'Number of corrupted files found'
+        value: ${{ jobs.error-handling.outputs.files-corrupted }}
+      files-recovered:
+        description: 'Number of files successfully recovered'
+        value: ${{ jobs.error-handling.outputs.files-recovered }}
+
+jobs:
+  error-handling:
+    name: Security Data Error Handling
+    runs-on: ubuntu-latest
+    
+    outputs:
+      success: ${{ steps.error_handling.outputs.success }}
+      can-continue: ${{ steps.error_handling.outputs.can-continue }}
+      functionality-level: ${{ steps.error_handling.outputs.functionality-level }}
+      files-corrupted: ${{ steps.error_handling.outputs.files-corrupted }}
+      files-recovered: ${{ steps.error_handling.outputs.files-recovered }}
+      report-path: ${{ steps.error_handling.outputs.report-path }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python for error handling
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install UV for error handling
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          source $HOME/.cargo/env
+          
+      - name: Install dependencies for error handling
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv sync --group dev --group security
+          
+      - name: Create error handling directories
+        run: |
+          mkdir -p security/audit
+          mkdir -p security/backups/cicd
+          mkdir -p security/reports/error-handling
+          
+      - name: Run comprehensive error handling
+        id: error_handling
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          echo "🔍 Starting comprehensive error handling for security data files..."
+          
+          # Prepare arguments
+          ARGS="--workflow-name '${{ inputs.workflow-name }}'"
+          
+          if [ "${{ inputs.enable-recovery }}" = "false" ]; then
+            ARGS="$ARGS --no-recovery"
+          fi
+          
+          if [ "${{ inputs.enable-degradation }}" = "false" ]; then
+            ARGS="$ARGS --no-degradation"
+          fi
+          
+          if [ "${{ inputs.fail-on-critical }}" = "false" ]; then
+            ARGS="$ARGS --no-fail-on-critical"
+          fi
+          
+          if [ "${{ inputs.verbose }}" = "true" ]; then
+            ARGS="$ARGS --verbose"
+          fi
+          
+          if [ -n "${{ inputs.specific-files }}" ]; then
+            ARGS="$ARGS --files ${{ inputs.specific-files }}"
+          fi
+          
+          # Set report path
+          REPORT_PATH="security/reports/error-handling/cicd-error-report-$(date +%Y%m%d_%H%M%S).json"
+          ARGS="$ARGS --output-report $REPORT_PATH"
+          
+          # Run error handling with proper error capture
+          set +e  # Don't exit on error, we need to capture the exit code
+          
+          eval "uv run python scripts/cicd_error_handler.py $ARGS"
+          EXIT_CODE=$?
+          
+          set -e  # Re-enable exit on error
+          
+          # Parse the report to extract outputs
+          if [ -f "$REPORT_PATH" ]; then
+            SUCCESS=$(python3 -c "import json; print(json.load(open('$REPORT_PATH'))['success'])" 2>/dev/null || echo "false")
+            CAN_CONTINUE=$(python3 -c "import json; print(json.load(open('$REPORT_PATH'))['workflow_can_continue'])" 2>/dev/null || echo "false")
+            FUNCTIONALITY_LEVEL=$(python3 -c "import json; print(json.load(open('$REPORT_PATH'))['functionality_level'])" 2>/dev/null || echo "unknown")
+            FILES_CORRUPTED=$(python3 -c "import json; print(json.load(open('$REPORT_PATH'))['statistics']['files_corrupted'])" 2>/dev/null || echo "0")
+            FILES_RECOVERED=$(python3 -c "import json; print(json.load(open('$REPORT_PATH'))['statistics']['files_recovered'])" 2>/dev/null || echo "0")
+            
+            echo "success=$SUCCESS" >> $GITHUB_OUTPUT
+            echo "can-continue=$CAN_CONTINUE" >> $GITHUB_OUTPUT
+            echo "functionality-level=$FUNCTIONALITY_LEVEL" >> $GITHUB_OUTPUT
+            echo "files-corrupted=$FILES_CORRUPTED" >> $GITHUB_OUTPUT
+            echo "files-recovered=$FILES_RECOVERED" >> $GITHUB_OUTPUT
+            echo "report-path=$REPORT_PATH" >> $GITHUB_OUTPUT
+            
+            echo "📊 Error Handling Results:"
+            echo "   Success: $SUCCESS"
+            echo "   Can Continue: $CAN_CONTINUE"
+            echo "   Functionality Level: $FUNCTIONALITY_LEVEL"
+            echo "   Files Corrupted: $FILES_CORRUPTED"
+            echo "   Files Recovered: $FILES_RECOVERED"
+            echo "   Report: $REPORT_PATH"
+          else
+            echo "❌ Error handling report not generated"
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "can-continue=false" >> $GITHUB_OUTPUT
+            echo "functionality-level=emergency" >> $GITHUB_OUTPUT
+            echo "files-corrupted=unknown" >> $GITHUB_OUTPUT
+            echo "files-recovered=0" >> $GITHUB_OUTPUT
+            echo "report-path=" >> $GITHUB_OUTPUT
+          fi
+          
+          # Handle exit code
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "✅ Error handling completed successfully"
+          elif [ "$CAN_CONTINUE" = "true" ]; then
+            echo "⚠️ Error handling completed with warnings - workflow can continue"
+            # Don't fail the step if workflow can continue
+          else
+            echo "❌ Error handling failed - workflow cannot continue"
+            exit $EXIT_CODE
+          fi
+          
+      - name: Upload error handling report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: error-handling-report-${{ inputs.workflow-name }}
+          path: security/reports/error-handling/
+          if-no-files-found: warn
+          
+      - name: Upload audit logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: error-handling-audit-${{ inputs.workflow-name }}
+          path: security/audit/
+          if-no-files-found: warn
+          
+      - name: Create workflow summary
+        if: always()
+        run: |
+          echo "## 🔍 Security Data Error Handling Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow:** ${{ inputs.workflow-name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Success:** ${{ steps.error_handling.outputs.success }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Can Continue:** ${{ steps.error_handling.outputs.can-continue }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Functionality Level:** ${{ steps.error_handling.outputs.functionality-level }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Files Corrupted:** ${{ steps.error_handling.outputs.files-corrupted }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Files Recovered:** ${{ steps.error_handling.outputs.files-recovered }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.error_handling.outputs.success }}" = "false" ]; then
+            if [ "${{ steps.error_handling.outputs.can-continue }}" = "true" ]; then
+              echo "⚠️ **Warning:** Error handling completed with issues but workflow can continue with degraded functionality." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Error:** Critical issues detected. Workflow cannot continue safely." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "✅ **Success:** All security data files processed successfully." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -n "${{ steps.error_handling.outputs.report-path }}" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📄 **Report:** ${{ steps.error_handling.outputs.report-path }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  validation-check:
+    name: Post-Error-Handling Validation
+    runs-on: ubuntu-latest
+    needs: error-handling
+    if: always() && needs.error-handling.outputs.can-continue == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Python for validation
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install UV for validation
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          source $HOME/.cargo/env
+          
+      - name: Install dependencies for validation
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          uv sync --group dev --group security
+          
+      - name: Validate security files after error handling
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          echo "🔍 Validating security files after error handling..."
+          
+          # Run validation with appropriate mode based on functionality level
+          FUNCTIONALITY_LEVEL="${{ needs.error-handling.outputs.functionality-level }}"
+          
+          if [ "$FUNCTIONALITY_LEVEL" = "full" ]; then
+            echo "✅ Full functionality - running complete validation"
+            uv run python scripts/validate_security_yaml.py --verbose
+          elif [ "$FUNCTIONALITY_LEVEL" = "reduced" ]; then
+            echo "⚠️ Reduced functionality - running validation with degraded mode"
+            uv run python scripts/validate_security_yaml.py --degraded-mode --verbose
+          elif [ "$FUNCTIONALITY_LEVEL" = "minimal" ]; then
+            echo "⚠️ Minimal functionality - running basic validation only"
+            uv run python scripts/validate_security_yaml.py --degraded-mode --create-fallback --verbose
+          else
+            echo "🚨 Emergency functionality - creating emergency files"
+            uv run python scripts/validate_security_yaml.py --create-emergency-files --verbose
+          fi
+          
+      - name: Report validation status
+        run: |
+          FUNCTIONALITY_LEVEL="${{ needs.error-handling.outputs.functionality-level }}"
+          
+          echo "## 📋 Post-Error-Handling Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Functionality Level:** $FUNCTIONALITY_LEVEL" >> $GITHUB_STEP_SUMMARY
+          
+          case "$FUNCTIONALITY_LEVEL" in
+            "full")
+              echo "✅ **Status:** All security files validated successfully" >> $GITHUB_STEP_SUMMARY
+              ;;
+            "reduced")
+              echo "⚠️ **Status:** Validation completed with reduced functionality" >> $GITHUB_STEP_SUMMARY
+              echo "- Some features may be disabled due to file corruption" >> $GITHUB_STEP_SUMMARY
+              ;;
+            "minimal")
+              echo "⚠️ **Status:** Validation completed with minimal functionality" >> $GITHUB_STEP_SUMMARY
+              echo "- Most features disabled, basic operations only" >> $GITHUB_STEP_SUMMARY
+              ;;
+            "emergency")
+              echo "🚨 **Status:** Emergency mode active" >> $GITHUB_STEP_SUMMARY
+              echo "- Critical file corruption detected" >> $GITHUB_STEP_SUMMARY
+              echo "- Manual intervention required" >> $GITHUB_STEP_SUMMARY
+              ;;
+          esac

@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    labels:
+      - "security"
+      - "dependencies"
+    reviewers:
+      - "maintainers"
+    assignees:
+      - "maintainers"
+    commit-message:
+      prefix: "security"
+      include: "scope"
+    open-pull-requests-limit: 10
+    allow:
+      - dependency-type: "all"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>mypylogger Security Status</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .status-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .grade-A { border-left: 5px solid #28a745; }
+        .grade-B { border-left: 5px solid #ffc107; }
+        .grade-C { border-left: 5px solid #fd7e14; }
+        .grade-D { border-left: 5px solid #dc3545; }
+        .summary { display: flex; gap: 20px; }
+        .metric { text-align: center; }
+        .metric h3 { margin: 0; font-size: 2em; }
+        .metric p { margin: 5px 0 0 0; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>mypylogger Security Status</h1>
+
+    <div class="status-card grade-B">
+        <h2>Security Grade: B</h2>
+        <p>Last Updated: 2025-10-27 02:58:37.819468+00:00</p>
+        <p>Last Scan: 2025-10-27 02:58:37.819468+00:00</p>
+    </div>
+
+    <div class="status-card">
+        <h2>Vulnerability Summary</h2>
+        <div class="summary">
+            <div class="metric">
+                <h3>3</h3>
+                <p>Total</p>
+            </div>
+            <div class="metric">
+                <h3>0</h3>
+                <p>Critical</p>
+            </div>
+            <div class="metric">
+                <h3>0</h3>
+                <p>High</p>
+            </div>
+            <div class="metric">
+                <h3>3</h3>
+                <p>Medium</p>
+            </div>
+            <div class="metric">
+                <h3>0</h3>
+                <p>Low</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-card">
+        <h2>Security Metrics</h2>
+        <p><strong>Days Since Last Vulnerability:</strong> 0</p>
+        <p><strong>Remediation Status:</strong> pending</p>
+    </div>
+
+    <div class="status-card">
+        <h2>API Access</h2>
+        <p>JSON API: <a href="index.json">index.json</a></p>
+        <p>This page updates automatically with each security scan.</p>
+    </div>
+</body>
+</html>

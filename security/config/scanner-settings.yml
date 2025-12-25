@@ -1,0 +1,57 @@
+# Security Scanner Configuration
+# This file defines settings for various security scanning tools
+
+scanners:
+  pip-audit:
+    enabled: true
+    output_format: "json"
+    output_file: "security/reports/latest/pip-audit.json"
+    options:
+      - "--format=json"
+      - "--output"
+      - "security/reports/latest/pip-audit.json"
+    
+  bandit:
+    enabled: true
+    output_format: "json"
+    output_file: "security/reports/latest/bandit.json"
+    options:
+      - "--format"
+      - "json"
+      - "--output"
+      - "security/reports/latest/bandit.json"
+      - "--recursive"
+      - "."
+    
+  secrets:
+    enabled: false  # Enable when secrets scanning tool is available
+    output_format: "json"
+    output_file: "security/reports/latest/secrets-scan.json"
+    options: []
+
+# Report archival settings
+archival:
+  enabled: true
+  archive_directory: "security/reports/archived"
+  date_format: "%Y-%m-%d"
+  keep_days: 90  # Keep archived reports for 90 days
+
+# Finding processing settings
+findings:
+  severity_levels:
+    - "critical"
+    - "high"
+    - "medium"
+    - "low"
+    - "info"
+  
+  auto_sync_remediation: true
+  create_default_plans: true
+  preserve_manual_edits: true
+
+# Document generation settings
+documentation:
+  findings_document: "security/findings/SECURITY_FINDINGS.md"
+  remediation_registry: "security/findings/remediation-plans.yml"
+  changelog: "security/findings/history/findings-changelog.md"
+  timeline: "security/findings/history/remediation-timeline.yml"

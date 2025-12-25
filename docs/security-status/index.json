@@ -1,0 +1,53 @@
+{
+  "last_updated": "2025-10-27T02:58:37.819468+00:00",
+  "scan_date": "2025-10-27T02:58:37.819468+00:00",
+  "vulnerability_summary": {
+    "total": 3,
+    "critical": 0,
+    "high": 0,
+    "medium": 3,
+    "low": 0,
+    "info": 0
+  },
+  "findings": [
+    {
+      "finding_id": "GHSA-4xh5-x5gv-qwph",
+      "package": "pip",
+      "version": "25.2",
+      "severity": "medium",
+      "discovered_date": "2025-10-27",
+      "days_since_discovery": 0,
+      "description": "### Summary  In the fallback extraction path for source distributions, `pip` used Python\u2019s `tarfile` module without verifying that symbolic/hard link targets resolve inside the intended extraction directory. A malicious sdist can include links that escape the target directory and overwrite arbitrary files on the invoking host during `pip install`.  ### Impact  Successful exploitation enables arbitrary file overwrite outside the build/extraction directory on the machine running `pip`. This can be...",
+      "fix_available": false,
+      "fix_version": null,
+      "reference_url": "https://github.com/advisories/GHSA-4xh5-x5gv-qwph"
+    },
+    {
+      "finding_id": "PYSEC-2022-42969",
+      "package": "py",
+      "version": "1.11.0",
+      "severity": "medium",
+      "discovered_date": "2025-10-27",
+      "days_since_discovery": 0,
+      "description": "The py library through 1.11.0 for Python allows remote attackers to conduct a ReDoS (Regular expression Denial of Service) attack via a Subversion repository with crafted info data, because the InfoSvnCommand argument is mishandled.",
+      "fix_available": false,
+      "fix_version": null,
+      "reference_url": "https://osv.dev/vulnerability/PYSEC-2022-42969"
+    },
+    {
+      "finding_id": "PYSEC-2025-49",
+      "package": "setuptools",
+      "version": "75.3.2",
+      "severity": "medium",
+      "discovered_date": "2025-10-27",
+      "days_since_discovery": 0,
+      "description": "setuptools is a package that allows users to download, build, install, upgrade, and uninstall Python packages. A path traversal vulnerability in `PackageIndex` is present in setuptools prior to version 78.1.1. An attacker would be allowed to write files to arbitrary locations on the filesystem with the permissions of the process running the Python code, which could escalate to remote code execution depending on the context. Version 78.1.1 fixes the issue.",
+      "fix_available": true,
+      "fix_version": "78.1.1",
+      "reference_url": "https://osv.dev/vulnerability/PYSEC-2025-49"
+    }
+  ],
+  "security_grade": "B",
+  "days_since_last_vulnerability": 0,
+  "remediation_status": "pending"
+}
