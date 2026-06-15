@@ -311,7 +311,7 @@ class GitHubPagesGenerator:
         <div class="footer">
             <p class="timestamp">Last Updated: {last_updated}</p>
             <p class="timestamp">Last Scan: {scan_date}</p>
-            <p><a href="index.json">View JSON API</a> | <a href="https://github.com/stabbotco1/mypylogger/security">GitHub Security</a></p>
+            <p><a href="index.json">View JSON API</a> | <a href="https://github.com/stephenabbot/mypylogger/security">GitHub Security</a></p>
         </div>
     </div>
 </body>

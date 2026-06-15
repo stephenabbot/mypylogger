@@ -174,7 +174,7 @@ export GITHUB_TOKEN=ghp_xxx
 Located in `badges/config.py`:
 ```python
 BADGE_CONFIG = {
-    'github_repo': 'stabbotco1/mypylogger',
+    'github_repo': 'stephenabbot/mypylogger',
     'pypi_package': 'mypylogger',
     'shields_base_url': 'https://img.shields.io',
     # ... additional configuration

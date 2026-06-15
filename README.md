@@ -34,13 +34,13 @@ logger.info("Application started")
 
 ## Documentation
 
-📚 **Complete documentation available in [docs/](https://github.com/stabbotco1/mypylogger/tree/main/docs)**
+📚 **Complete documentation available in [docs/](https://github.com/stephenabbot/mypylogger/tree/main/docs)**
 
-- **[Features](https://github.com/stabbotco1/mypylogger/blob/main/docs/FEATURES.md)** - Complete feature reference with code examples
-- **[Security](https://github.com/stabbotco1/mypylogger/blob/main/docs/SECURITY.md)** - Security posture and vulnerability management
-- **[Performance](https://github.com/stabbotco1/mypylogger/blob/main/docs/PERFORMANCE.md)** - Performance characteristics and best practices
+- **[Features](https://github.com/stephenabbot/mypylogger/blob/main/docs/FEATURES.md)** - Complete feature reference with code examples
+- **[Security](https://github.com/stephenabbot/mypylogger/blob/main/docs/SECURITY.md)** - Security posture and vulnerability management
+- **[Performance](https://github.com/stephenabbot/mypylogger/blob/main/docs/PERFORMANCE.md)** - Performance characteristics and best practices
 
-For comprehensive API documentation, see the [Sphinx docs](https://github.com/stabbotco1/mypylogger/tree/main/docs/source).
+For comprehensive API documentation, see the [Sphinx docs](https://github.com/stephenabbot/mypylogger/tree/main/docs/source).
 
 ## Development
 

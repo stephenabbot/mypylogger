@@ -18,13 +18,13 @@ class TestPublishingFailureNotifier:
     def test_notifier_initialization(self, repository_context: dict[str, str]) -> None:
         """Test notifier initialization."""
         # Use repository context to ensure proper test environment
-        assert repository_context["owner"] == "stabbotco1"
+        assert repository_context["owner"] == "stephenabbot"
         assert repository_context["name"] == "mypylogger"
 
         notifier = PublishingFailureNotifier()
 
         assert notifier.github_token is None
-        assert notifier.repository == "stabbotco1/mypylogger"
+        assert notifier.repository == "stephenabbot/mypylogger"
 
     def test_notifier_initialization_with_token(self) -> None:
         """Test notifier initialization with GitHub token."""
@@ -135,7 +135,7 @@ class TestPublishingFailureNotifier:
     ) -> None:
         """Test successful GitHub issue creation."""
         # Use repository context to ensure proper test environment
-        assert repository_context["owner"] == "stabbotco1"
+        assert repository_context["owner"] == "stephenabbot"
         assert repository_context["name"] == "mypylogger"
 
         notifier = PublishingFailureNotifier("test-token")
@@ -144,7 +144,7 @@ class TestPublishingFailureNotifier:
         mock_response = Mock()
         mock_response.status = 201
         mock_response.read.return_value = (
-            b'{"html_url": "https://github.com/stabbotco1/mypylogger/issues/123", "number": 123}'
+            b'{"html_url": "https://github.com/stephenabbot/mypylogger/issues/123", "number": 123}'
         )
         mock_urlopen.return_value = mock_response
 
@@ -160,7 +160,7 @@ class TestPublishingFailureNotifier:
         # Verify API call parameters
         call_args = mock_urlopen.call_args
         request_obj = call_args[0][0]  # First argument is the Request object
-        assert "repos/stabbotco1/mypylogger/issues" in request_obj.full_url
+        assert "repos/stephenabbot/mypylogger/issues" in request_obj.full_url
         assert request_obj.headers["Authorization"] == "token test-token"
 
     def test_create_github_issue_no_token(self) -> None:
@@ -189,14 +189,14 @@ class TestPublishingFailureNotifier:
     ) -> None:
         """Test GitHub issue creation with HTTP error."""
         # Use repository context to ensure proper test environment
-        assert repository_context["owner"] == "stabbotco1"
+        assert repository_context["owner"] == "stephenabbot"
         assert repository_context["name"] == "mypylogger"
 
         notifier = PublishingFailureNotifier("test-token")
 
         # Mock HTTP error response
         mock_urlopen.side_effect = HTTPError(
-            url="https://api.github.com/repos/stabbotco1/mypylogger/issues",
+            url="https://api.github.com/repos/stephenabbot/mypylogger/issues",
             code=404,
             msg="Not Found",
             hdrs=None,

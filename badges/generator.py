@@ -242,5 +242,5 @@ def get_comprehensive_security_badge_link() -> str:
         return security_status["link_url"]
     except Exception:
         # Fallback to default repository security tab
-        github_repo = os.getenv("GITHUB_REPOSITORY", "stabbotco1/mypylogger")
+        github_repo = os.getenv("GITHUB_REPOSITORY", "stephenabbot/mypylogger")
         return f"https://github.com/{github_repo}/security"

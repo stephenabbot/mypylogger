@@ -199,7 +199,7 @@ class SecurityStatusMonitor:
             metrics_file: Path to metrics storage file.
             alert_config: Alert configuration.
         """
-        self.base_url = base_url or "https://stabbotco1.github.io/mypylogger"
+        self.base_url = base_url or "https://stephenabbot.github.io/mypylogger"
         self.metrics_file = metrics_file or Path("monitoring/metrics.json")
         self.alert_config = alert_config or AlertConfig()
         self.uptime_metrics = UptimeMetrics()

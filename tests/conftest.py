@@ -81,8 +81,8 @@ def repository_context() -> Generator[dict[str, str], None, None]:
         original_env[var] = os.environ.get(var)
 
     # Set consistent repository context for all tests
-    os.environ["GITHUB_REPOSITORY"] = "stabbotco1/mypylogger"
-    os.environ["GITHUB_REPOSITORY_OWNER"] = "stabbotco1"
+    os.environ["GITHUB_REPOSITORY"] = "stephenabbot/mypylogger"
+    os.environ["GITHUB_REPOSITORY_OWNER"] = "stephenabbot"
     os.environ["GITHUB_API_URL"] = "https://api.github.com"
     os.environ["GITHUB_SERVER_URL"] = "https://github.com"
     os.environ["GITHUB_REF"] = "refs/heads/main"
@@ -94,9 +94,9 @@ def repository_context() -> Generator[dict[str, str], None, None]:
 
     # Return repository context data
     context = {
-        "owner": "stabbotco1",
+        "owner": "stephenabbot",
         "name": "mypylogger",
-        "full_name": "stabbotco1/mypylogger",
+        "full_name": "stephenabbot/mypylogger",
         "api_url": "https://api.github.com",
         "server_url": "https://github.com",
     }
@@ -219,7 +219,7 @@ def standardized_test_environment(
 
     # Set standardized test environment variables
     os.environ["TEST_ENVIRONMENT"] = "ci" if test_environment_config["is_ci"] else "local"
-    os.environ["TEST_REPOSITORY_CONTEXT"] = "stabbotco1/mypylogger"
+    os.environ["TEST_REPOSITORY_CONTEXT"] = "stephenabbot/mypylogger"
 
     yield
 
@@ -259,7 +259,7 @@ def github_api_responses() -> dict[str, Any]:
         "issue_created": {
             "status": 201,
             "response": {
-                "html_url": "https://github.com/stabbotco1/mypylogger/issues/123",
+                "html_url": "https://github.com/stephenabbot/mypylogger/issues/123",
                 "number": 123,
                 "title": "Test Issue",
                 "state": "open",
@@ -275,11 +275,11 @@ def github_api_responses() -> dict[str, Any]:
         "repository_info": {
             "status": 200,
             "response": {
-                "full_name": "stabbotco1/mypylogger",
-                "owner": {"login": "stabbotco1"},
+                "full_name": "stephenabbot/mypylogger",
+                "owner": {"login": "stephenabbot"},
                 "name": "mypylogger",
                 "private": False,
-                "html_url": "https://github.com/stabbotco1/mypylogger",
+                "html_url": "https://github.com/stephenabbot/mypylogger",
             },
         },
         "unauthorized": {"status": 401, "response": {"message": "Bad credentials"}},

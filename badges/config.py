@@ -93,7 +93,7 @@ def get_badge_config() -> BadgeConfig:
         BadgeConfigurationError: If configuration is invalid.
     """
     try:
-        github_repo = os.getenv("GITHUB_REPOSITORY", "stabbotco1/mypylogger")
+        github_repo = os.getenv("GITHUB_REPOSITORY", "stephenabbot/mypylogger")
         pypi_package = os.getenv("PYPI_PACKAGE", "mypylogger")
         shields_base_url = os.getenv("SHIELDS_BASE_URL", "https://img.shields.io")
 
@@ -120,7 +120,7 @@ def get_badge_config() -> BadgeConfig:
 
 # Badge template URLs for shields.io integration
 BADGE_CONFIG: dict[str, Any] = {
-    "github_repo": "stabbotco1/mypylogger",
+    "github_repo": "stephenabbot/mypylogger",
     "pypi_package": "mypylogger",
     "shields_base_url": "https://img.shields.io",
     "badge_templates": {

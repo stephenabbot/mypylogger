@@ -86,6 +86,6 @@ It's designed for developers who want:
 
 ---
 
-**Repository**: https://github.com/stabbotco1/mypylogger
-**Issues**: https://github.com/stabbotco1/mypylogger/issues
+**Repository**: https://github.com/stephenabbot/mypylogger
+**Issues**: https://github.com/stephenabbot/mypylogger/issues
 **PyPI**: https://pypi.org/project/mypylogger/

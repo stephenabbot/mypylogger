@@ -39,12 +39,12 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/stabbotco1/mypylogger"
-Documentation = "https://github.com/stabbotco1/mypylogger/blob/main/README.md"
-Repository = "https://github.com/stabbotco1/mypylogger"
-"Bug Tracker" = "https://github.com/stabbotco1/mypylogger/issues"
-Changelog = "https://github.com/stabbotco1/mypylogger/blob/main/CHANGELOG.md"
-"Source Code" = "https://github.com/stabbotco1/mypylogger"
+Homepage = "https://github.com/stephenabbot/mypylogger"
+Documentation = "https://github.com/stephenabbot/mypylogger/blob/main/README.md"
+Repository = "https://github.com/stephenabbot/mypylogger"
+"Bug Tracker" = "https://github.com/stephenabbot/mypylogger/issues"
+Changelog = "https://github.com/stephenabbot/mypylogger/blob/main/CHANGELOG.md"
+"Source Code" = "https://github.com/stephenabbot/mypylogger"
 "Download" = "https://pypi.org/project/mypylogger/"
 
 [build-system]

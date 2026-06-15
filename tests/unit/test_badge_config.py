@@ -182,7 +182,7 @@ class TestGetBadgeConfig:
         with patch.dict(os.environ, {}, clear=True):
             config = get_badge_config()
 
-            assert config.github_repo == "stabbotco1/mypylogger"
+            assert config.github_repo == "stephenabbot/mypylogger"
             assert config.pypi_package == "mypylogger"
             assert config.shields_base_url == "https://img.shields.io"
             assert config.max_retries == 10

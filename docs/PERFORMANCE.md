@@ -225,6 +225,6 @@ def test_log_overhead(benchmark):
 
 ---
 
-**Performance questions?** Open an issue: https://github.com/stabbotco1/mypylogger/issues
+**Performance questions?** Open an issue: https://github.com/stephenabbot/mypylogger/issues
 
 **Next:** [Back to docs](README.md) | [FEATURES.md](FEATURES.md) | [SECURITY.md](SECURITY.md)

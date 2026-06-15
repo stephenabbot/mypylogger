@@ -437,9 +437,9 @@ class TestPyPIPublishingIntegration:
             assert test_environment_config["retry_attempts"] == 2
 
         # Verify repository context is set correctly
-        assert os.environ.get("GITHUB_REPOSITORY") == "stabbotco1/mypylogger"
-        assert os.environ.get("GITHUB_REPOSITORY_OWNER") == "stabbotco1"
-        assert os.environ.get("TEST_REPOSITORY_CONTEXT") == "stabbotco1/mypylogger"
+        assert os.environ.get("GITHUB_REPOSITORY") == "stephenabbot/mypylogger"
+        assert os.environ.get("GITHUB_REPOSITORY_OWNER") == "stephenabbot"
+        assert os.environ.get("TEST_REPOSITORY_CONTEXT") == "stephenabbot/mypylogger"
 
         # Test performance threshold calculation with environment config
         # Use the max_execution_time from test environment config which already

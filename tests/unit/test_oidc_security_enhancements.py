@@ -583,7 +583,7 @@ class TestOIDCWorkflowSecurityIntegration:
         github_env = {
             "GITHUB_ACTIONS": "true",
             "GITHUB_ACTOR": "github-actions[bot]",
-            "GITHUB_REPOSITORY": "stabbotco1/mypylogger",
+            "GITHUB_REPOSITORY": "stephenabbot/mypylogger",
             "GITHUB_REF": "refs/heads/main",
             "GITHUB_SHA": "abc123def456",
         }
@@ -593,7 +593,7 @@ class TestOIDCWorkflowSecurityIntegration:
 
             # Verify environment is detected as GitHub Actions
             assert os.environ.get("GITHUB_ACTIONS") == "true"
-            assert os.environ.get("GITHUB_REPOSITORY") == "stabbotco1/mypylogger"
+            assert os.environ.get("GITHUB_REPOSITORY") == "stephenabbot/mypylogger"
 
     def test_workflow_permission_validation(self) -> None:
         """Test that workflow permissions are properly configured."""
@@ -653,7 +653,7 @@ class TestOIDCWorkflowSecurityIntegration:
         """Test GitHub repository validation for OIDC trust."""
         # Valid repository formats
         valid_repos = [
-            "stabbotco1/mypylogger",
+            "stephenabbot/mypylogger",
             "organization/project-name",
             "user/repo_name",
         ]

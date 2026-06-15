@@ -343,7 +343,7 @@ class TestRepositoryContextValidation:
         result = validate_repository_context()
         assert result is False
 
-    @patch.dict("os.environ", {"GITHUB_REPOSITORY": "stabbotco1/mypylogger"})
+    @patch.dict("os.environ", {"GITHUB_REPOSITORY": "stephenabbot/mypylogger"})
     def test_validate_repository_context_correct_repo(self) -> None:
         """Test repository context validation with correct repository."""
         result = validate_repository_context()

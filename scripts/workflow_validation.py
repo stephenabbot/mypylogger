@@ -432,8 +432,8 @@ def validate_repository_context() -> bool:
         print("⚠️  GITHUB_REPOSITORY environment variable not set")
         return False
 
-    if github_repo != "stabbotco1/mypylogger":
-        print(f"❌ Incorrect repository context: {github_repo} (expected: stabbotco1/mypylogger)")
+    if github_repo != "stephenabbot/mypylogger":
+        print(f"❌ Incorrect repository context: {github_repo} (expected: stephenabbot/mypylogger)")
         return False
 
     print("✅ Repository context properly configured")

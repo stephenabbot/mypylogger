@@ -188,7 +188,7 @@ class TestStaticBadgeGeneration:
         with patch.dict(os.environ, {}, clear=True):
             url = generate_license_badge()
 
-            expected = "https://img.shields.io/github/license/stabbotco1/mypylogger?style=flat"
+            expected = "https://img.shields.io/github/license/stephenabbot/mypylogger?style=flat"
             assert url == expected
 
     def test_generate_license_badge_with_custom_repo(self) -> None:
@@ -214,7 +214,7 @@ class TestStaticBadgeGeneration:
             # Should fallback to default configuration
             url = generate_license_badge()
 
-            expected = "https://img.shields.io/github/license/stabbotco1/mypylogger?style=flat"
+            expected = "https://img.shields.io/github/license/stephenabbot/mypylogger?style=flat"
             assert url == expected
 
 
@@ -312,7 +312,7 @@ class TestDynamicBadgeGeneration:
             with patch.dict(os.environ, {}, clear=True):
                 url = generate_quality_gate_badge()
 
-                expected = "https://img.shields.io/github/actions/workflow/status/stabbotco1/mypylogger/quality-gate.yml?style=flat&label=quality%20gate"
+                expected = "https://img.shields.io/github/actions/workflow/status/stephenabbot/mypylogger/quality-gate.yml?style=flat&label=quality%20gate"
                 assert url == expected
 
     def test_generate_quality_gate_badge_with_custom_config(self) -> None:
@@ -330,7 +330,7 @@ class TestDynamicBadgeGeneration:
             with patch.dict(os.environ, env_vars, clear=True):
                 url = generate_quality_gate_badge()
 
-                expected = "https://custom.shields.io/github/actions/workflow/status/stabbotco1/mypylogger/quality-gate.yml?style=flat&label=quality%20gate"
+                expected = "https://custom.shields.io/github/actions/workflow/status/stephenabbot/mypylogger/quality-gate.yml?style=flat&label=quality%20gate"
                 assert url == expected
 
     def test_generate_quality_gate_badge_with_exception(self) -> None:
@@ -342,7 +342,7 @@ class TestDynamicBadgeGeneration:
                 # Should fallback to unknown status
                 url = generate_quality_gate_badge()
 
-                expected = "https://img.shields.io/github/actions/workflow/status/stabbotco1/mypylogger/quality-gate.yml?style=flat&label=quality%20gate"
+                expected = "https://img.shields.io/github/actions/workflow/status/stephenabbot/mypylogger/quality-gate.yml?style=flat&label=quality%20gate"
                 assert url == expected
 
     def test_generate_pypi_version_badge_with_defaults(self) -> None:
@@ -728,7 +728,7 @@ class TestComprehensiveSecurityBadge:
 
         with patch.dict(os.environ, {}, clear=True):
             link_url = get_comprehensive_security_badge_link()
-            assert link_url == "https://github.com/stabbotco1/mypylogger/security"
+            assert link_url == "https://github.com/stephenabbot/mypylogger/security"
 
     def test_comprehensive_security_badge_color_mapping(self) -> None:
         """Test that all security status values have appropriate color mappings."""

@@ -20,7 +20,7 @@ def simulate_ci_environment() -> bool:
     os.environ["CI"] = "true"
     os.environ["GITHUB_ACTIONS"] = "true"
     os.environ["TESTS_PASSED"] = "true"
-    os.environ["GITHUB_REPOSITORY"] = "stabbotco1/mypylogger"
+    os.environ["GITHUB_REPOSITORY"] = "stephenabbot/mypylogger"
     os.environ["PYPI_PACKAGE"] = "mypylogger"
 
     print("✅ CI environment variables set")

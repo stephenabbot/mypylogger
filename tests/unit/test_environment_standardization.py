@@ -139,8 +139,8 @@ class TestEnvironmentConfiguration:
         _ = repository_context
 
         # Verify repository context environment variables are set
-        assert os.environ.get("GITHUB_REPOSITORY") == "stabbotco1/mypylogger"
-        assert os.environ.get("GITHUB_REPOSITORY_OWNER") == "stabbotco1"
+        assert os.environ.get("GITHUB_REPOSITORY") == "stephenabbot/mypylogger"
+        assert os.environ.get("GITHUB_REPOSITORY_OWNER") == "stephenabbot"
         assert os.environ.get("GITHUB_API_URL") == "https://api.github.com"
         assert os.environ.get("GITHUB_SERVER_URL") == "https://github.com"
 
@@ -163,7 +163,7 @@ class TestEnvironmentConfiguration:
         test_env = os.environ.get("TEST_ENVIRONMENT")
         assert test_env in ["ci", "local"]
 
-        assert os.environ.get("TEST_REPOSITORY_CONTEXT") == "stabbotco1/mypylogger"
+        assert os.environ.get("TEST_REPOSITORY_CONTEXT") == "stephenabbot/mypylogger"
 
     def test_github_api_mock_functionality(
         self, mock_github_api: Mock, github_api_responses: dict[str, Any]
