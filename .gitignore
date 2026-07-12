@@ -210,3 +210,8 @@ pip-audit-ci-results.json
 # Version management backup directories (temporary only)
 version_backup/
 .version_backup/
+
+# Claude working files
+z_commands.sh
+z_results.txt
+claude.context.md
