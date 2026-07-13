@@ -1,14 +1,13 @@
-# mypylogger v0.2.8
+# mypylogger
 
-<!-- BADGES START -->
-[![Quality Gate](https://img.shields.io/github/actions/workflow/status/stephenabbot/mypylogger/quality-gate.yml?style=flat&label=quality%20gate)](https://img.shields.io/github/actions/workflow/status/stephenabbot/mypylogger/quality-gate.yml?style=flat&label=quality%20gate) [![Security](https://img.shields.io/badge/security-verified-brightgreen?style=flat)](https://github.com/stephenabbot/mypylogger/security/code-scanning) [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000?style=flat)](https://img.shields.io/badge/code%20style-ruff-000000?style=flat) [![Type Checked: mypy](https://img.shields.io/badge/type%20checked-mypy-blue?style=flat)](https://img.shields.io/badge/type%20checked-mypy-blue?style=flat) [![Test Coverage](https://img.shields.io/badge/coverage-96%25-brightgreen?style=flat)](https://img.shields.io/badge/coverage-96%25-brightgreen?style=flat) [![Python Versions](https://img.shields.io/pypi/pyversions/mypylogger?style=flat)](https://img.shields.io/pypi/pyversions/mypylogger?style=flat) [![PyPI Version](https://img.shields.io/pypi/v/mypylogger?style=flat)](https://img.shields.io/pypi/v/mypylogger?style=flat) [![Downloads: Development](https://img.shields.io/pypi/dm/mypylogger?style=flat)](https://img.shields.io/pypi/dm/mypylogger?style=flat) [![License: MIT](https://img.shields.io/github/license/stephenabbot/mypylogger?style=flat)](https://img.shields.io/github/license/stephenabbot/mypylogger?style=flat)
-<!-- BADGES END -->
+[![PyPI Version](https://img.shields.io/pypi/v/mypylogger)](https://pypi.org/project/mypylogger/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/mypylogger)](https://pypi.org/project/mypylogger/)
+[![License](https://img.shields.io/github/license/stephenabbot/mypylogger)](https://github.com/stephenabbot/mypylogger/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/stephenabbot/mypylogger/ci.yml)](https://github.com/stephenabbot/mypylogger/actions/workflows/ci.yml)
 
-A Python logging library designed to provide enhanced logging capabilities with zero dependencies and sensible defaults.
-
-## Vision
-
-Create a **zero-dependency JSON logging library with sensible defaults** for Python applications. mypylogger v0.2.8 does ONE thing exceptionally well: structured JSON logs that work everywhere—from local development to AWS Lambda to Kubernetes.
+Zero-dependency structured JSON logging for Python, with sensible defaults. One
+JSON event per line, standard-library only, ready for local development, AWS
+Lambda, and Linux containers.
 
 ## Installation
 
@@ -16,52 +15,70 @@ Create a **zero-dependency JSON logging library with sensible defaults** for Pyt
 pip install mypylogger
 ```
 
-## Quick Start
+## Quick start
 
 ```python
-from mypylogger import get_logger
+from mypylogger import get_logger, bind, clear_bindings
 
 logger = get_logger(__name__)
-logger.info("Application started")
+logger.info("service started")
+
+# Attach context to every subsequent event in this task/thread.
+bind(request_id="abc123", user="stephen")
+logger.info("handling request")        # includes request_id and user
+clear_bindings()
+
+# Per-call extra fields.
+logger.info("processed", extra={"items": 42})
+
+# Exceptions render as a structured ECS-style error object.
+try:
+    1 / 0
+except ZeroDivisionError:
+    logger.exception("computation failed")
 ```
 
-## Features
+Each event is a single JSON line with a stable field order, `timestamp` always
+first (ISO 8601, microsecond precision, `Z` suffix):
 
-- **Zero Dependencies** (pure Python standard library)
-- **Clean, Predictable JSON Output**
-- **Developer-Friendly Defaults**
-- **Standard Python Patterns**
-
-## Documentation
-
-📚 **Complete documentation available in [docs/](https://github.com/stephenabbot/mypylogger/tree/main/docs)**
-
-- **[Features](https://github.com/stephenabbot/mypylogger/blob/main/docs/FEATURES.md)** - Complete feature reference with code examples
-- **[Security](https://github.com/stephenabbot/mypylogger/blob/main/docs/SECURITY.md)** - Security posture and vulnerability management
-- **[Performance](https://github.com/stephenabbot/mypylogger/blob/main/docs/PERFORMANCE.md)** - Performance characteristics and best practices
-
-For comprehensive API documentation, see the [Sphinx docs](https://github.com/stephenabbot/mypylogger/tree/main/docs/source).
-
-## Development
-
-This project uses UV for dependency management:
-
-```bash
-# Install dependencies
-uv sync
-
-# Run tests
-uv run pytest
-
-# Format code
-uv run ruff format .
-
-# Check linting
-uv run ruff check .
+```json
+{"timestamp": "2026-07-12T18:30:00.123456Z", "level": "INFO", "message": "service started", "module": "app", "filename": "app.py", "function_name": "main", "line": 10, "hostname": "host", "pid": 4123, "service": "mypylogger", "environment": "unknown", "version": "unknown"}
 ```
+
+DEBUG/INFO route to stdout; WARNING/ERROR/CRITICAL route to stderr.
+
+## Configuration
+
+All configuration is via environment variables, read once at import time. No
+config file.
+
+| Variable | Default | Effect |
+|---|---|---|
+| `APP_NAME` | `mypylogger` | Logger name and log-file prefix; also the `service` field |
+| `LOG_LEVEL` | `INFO` | Effective log level (case-insensitive) |
+| `LOG_TO_FILE` | `false` | Enable file logging when `true` |
+| `LOG_FILE_DIR` | current working dir | Directory for log files |
+| `LOG_MULTIPROCESS` | `false` | Route file writes through a library-owned listener process for safe multi-process shared-file logging |
+| `LOG_SOCKET_PORT` | `9020` | TCP port on `127.0.0.1` for the multi-process listener |
+| `HOSTNAME` | `socket.gethostname()` | `hostname` static field |
+| `APP_ENV` | `unknown` | `environment` static field |
+| `APP_VERSION` | `unknown` | `version` static field |
+
+Setting `HOSTNAME`, `APP_ENV`, or `APP_VERSION` to an empty string omits that
+field entirely.
+
+## API
+
+- `get_logger(name=None, static_fields=None) -> logging.Logger`
+- `bind(**fields) -> None`
+- `clear_bindings() -> None`
+
+## Specifications
+
+Authoritative behavior and packaging are documented in
+[`01_rewrite_specification.md`](01_rewrite_specification.md) and
+[`02_packaging_specification.md`](02_packaging_specification.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-© 2025 Stephen Abbot - MIT License
+MIT — see [LICENSE](LICENSE).
