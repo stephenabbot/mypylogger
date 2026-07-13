@@ -4,6 +4,26 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-07-13
+
+Packaging and documentation polish only — no functional or API changes.
+
+### Fixed
+
+- README links to the specification files and `LICENSE` now use absolute GitHub
+  URLs so they resolve on the PyPI project page (relative Markdown links 404
+  there, since PyPI does not serve repository files).
+- Restored the canonical MIT license text in `LICENSE`.
+
+### Changed
+
+- CI badge pinned to the `main` branch for an explicit, stable signal.
+- Added a `Documentation` project URL and restored the
+  `Libraries :: Python Modules` and `System :: Systems Administration` topic
+  classifiers for discoverability.
+
+[1.0.1]: https://github.com/stephenabbot/mypylogger/releases/tag/v1.0.1
+
 ## [1.0.0] - 2026-07-12
 
 Clean-slate rewrite. The `0.2.x` line is retired; nothing is carried forward.

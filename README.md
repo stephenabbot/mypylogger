@@ -3,7 +3,7 @@
 [![PyPI Version](https://img.shields.io/pypi/v/mypylogger)](https://pypi.org/project/mypylogger/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/mypylogger)](https://pypi.org/project/mypylogger/)
 [![License](https://img.shields.io/github/license/stephenabbot/mypylogger)](https://github.com/stephenabbot/mypylogger/blob/main/LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/stephenabbot/mypylogger/ci.yml)](https://github.com/stephenabbot/mypylogger/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/stephenabbot/mypylogger/ci.yml?branch=main)](https://github.com/stephenabbot/mypylogger/actions/workflows/ci.yml)
 
 Zero-dependency structured JSON logging for Python, with sensible defaults. One
 JSON event per line, standard-library only, ready for local development, AWS
@@ -76,9 +76,10 @@ field entirely.
 ## Specifications
 
 Authoritative behavior and packaging are documented in
-[`01_rewrite_specification.md`](01_rewrite_specification.md) and
-[`02_packaging_specification.md`](02_packaging_specification.md).
+[`01_rewrite_specification.md`](https://github.com/stephenabbot/mypylogger/blob/main/01_rewrite_specification.md)
+and
+[`02_packaging_specification.md`](https://github.com/stephenabbot/mypylogger/blob/main/02_packaging_specification.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/stephenabbot/mypylogger/blob/main/LICENSE).

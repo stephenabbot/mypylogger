@@ -214,4 +214,5 @@ version_backup/
 # Claude working files
 z_commands.sh
 z_results.txt
+z_screensnap*
 claude.context.md

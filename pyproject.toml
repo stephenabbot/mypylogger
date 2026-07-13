@@ -25,7 +25,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Logging",
+    "Topic :: System :: Systems Administration",
     "Typing :: Typed",
 ]
 dependencies = []
@@ -35,6 +37,7 @@ Homepage = "https://github.com/stephenabbot/mypylogger"
 Repository = "https://github.com/stephenabbot/mypylogger"
 Issues = "https://github.com/stephenabbot/mypylogger/issues"
 Changelog = "https://github.com/stephenabbot/mypylogger/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/stephenabbot/mypylogger/blob/main/README.md"
 
 [build-system]
 requires = ["hatchling"]

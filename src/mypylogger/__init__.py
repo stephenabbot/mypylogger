@@ -41,7 +41,7 @@ from pathlib import Path
 from types import FrameType
 from typing import Any, cast
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 __all__ = ["__version__", "bind", "clear_bindings", "get_logger"]
 
